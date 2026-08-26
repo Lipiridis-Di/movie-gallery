@@ -1,0 +1,8 @@
+/* Tailwind v4: один импорт вместо трёх директив @tailwind base/components/utilities */
+@import "tailwindcss";
+
+/* Немного глобальных базовых стилей — почти всё остальное будет через Tailwind-классы прямо в JSX */
+body {
+  margin: 0;
+  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+}
