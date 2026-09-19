@@ -4,10 +4,11 @@ Pet-проект: каталог фильмов в духе Кинопоиска
 с актёрами и трейлером, избранное с сохранением между визитами.
 
 Данные — [TMDB API](https://www.themoviedb.org/). React + TypeScript + React Router +
-Zustand + Tailwind CSS.
+TanStack Query + Zustand + Tailwind CSS, архитектура — Feature-Sliced Design.
 
 Учебный проект: сделан пошагово по связке to-do → спека-брейншторм → генерация,
-документы обоих шагов планирования — в [`docs/`](./docs).
+документы обоих шагов планирования — в [`docs/`](./docs). Актуальная техническая спецификация
+(стек, архитектура, контракты) — в [`spec.md`](./spec.md).
 
 ## Возможности
 
@@ -23,11 +24,18 @@ Zustand + Tailwind CSS.
 - **TypeScript** — по всему проекту, включая API-слой и типы ответов TMDB.
 - **React Router** — роутинг между каталогом, страницей фильма и избранным;
   поиск/фильтр — через `useSearchParams`, а не отдельный стейт-менеджер.
+- **TanStack Query** — все данные, приходящие из TMDB (каталог, детали, актёры, трейлер, жанры) —
+  кеш, состояния загрузки/ошибки/повтора приходят из `useQuery`/`useQueries`, а не ручного `useState`.
 - **Zustand** — глобальный стор только там, где данные реально нужны в нескольких
   несвязанных местах одновременно (избранное — карточка, страница фильма, страница избранного).
 - **Tailwind CSS** — стили утилитами прямо в разметке.
+- **Feature-Sliced Design** — код организован слоями `app → pages → widgets → features →
+  entities → shared`, каждый видит только нижестоящие; подробности и правила импортов — в
+  [`spec.md`](./spec.md).
 
-Более подробный разбор архитектурных решений — в [`docs/02-spec-brainstorm.md`](./docs/02-spec-brainstorm.md).
+Более подробный разбор исходных архитектурных решений — в
+[`docs/02-spec-brainstorm.md`](./docs/02-spec-brainstorm.md) (часть решений с тех пор эволюционировала
+до FSD — актуальная версия в `spec.md`).
 
 ## Как запустить локально
 
@@ -46,23 +54,27 @@ Zustand + Tailwind CSS.
    ```
    Откроется адрес вида `http://localhost:5173`.
 
-Если ключа нет или он неверный — приложение покажет понятную ошибку вместо падения (см. `src/api/client.ts`).
+Если ключа нет или он неверный — приложение покажет понятную ошибку вместо падения (см.
+`src/shared/api/client.ts`).
 
 ## Структура проекта
 
+Организована по Feature-Sliced Design: слой видит только те, что ниже него.
+
 ```
 src/
-  api/          — запросы к TMDB (client.ts — общая обёртка, movies.ts — конкретные функции)
-  types/        — TypeScript-типы данных (Movie, MovieDetails, Genre, ...)
-  components/
-    layout/     — Header, Footer (TMDB-атрибуция) и Layout, общие для всех страниц
-    movies/     — MovieCard, MovieGrid, FavoriteButton, CastList, TrailerEmbed
-    catalog/    — SearchBar и GenreFilter, читают/пишут фильтры в адресную строку
-    ui/         — Loader, ErrorMessage, EmptyState — общие для всех страниц состояния
-  pages/        — целые страницы: HomePage, MovieDetailsPage, FavoritesPage, NotFoundPage
-  router/       — таблица маршрутов (AppRouter.tsx)
-  store/        — Zustand-стор избранного (favoritesStore.ts), сохраняется в localStorage
+  app/        — провайдеры (QueryProvider, роутер), глобальные стили, корневой App
+  pages/      — home, movie-details, favorites, not-found — целые страницы-маршруты
+  widgets/    — layout (Header+Footer+Outlet), header, footer, movie-grid
+  features/   — search-movies, filter-by-genre, toggle-favorite (здесь же стор избранного)
+  entities/   — movie, genre, cast, video — типы, TanStack Query-запросы, UI сущностей
+  shared/     — api/client.ts (tmdbFetch), api/images.ts, ui/ (Loader, ErrorMessage, EmptyState),
+                lib/useDebouncedValue, config/env.ts
 ```
+
+Импорты — только из среза целиком, через его `index.ts` (например `@/entities/movie`), по алиасу
+`@/` от `src`. Полное описание слоёв, правил импортов и карта TMDB-эндпоинтов — в
+[`spec.md`](./spec.md).
 
 ## Планы (фаза 2)
 
